@@ -1,164 +1,185 @@
-'use client'
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mic, MicOff, Loader2, VolumeIcon } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Mic, MicOff, Loader2, VolumeIcon } from "lucide-react";
 
-type Language = 'en' | 'es' | 'mx'
+type Language = "en" | "es" | "mx";
 
 export default function AudioRecorderTranscriberTranslator() {
-  const [isRecording, setIsRecording] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [isTranslating, setIsTranslating] = useState(false)
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
-  const [transcribedText, setTranscribedText] = useState('')
-  const [translatedText, setTranslatedText] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [sourceLanguage, setSourceLanguage] = useState<Language>('en')
-  const [targetLanguage, setTargetLanguage] = useState<Language>('es')
-  const [audioSrc, setAudioSrc] = useState<string | null>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [transcribedText, setTranscribedText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [sourceLanguage, setSourceLanguage] = useState<Language>("en");
+  const [targetLanguage, setTargetLanguage] = useState<Language>("es");
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorderRef.current = new MediaRecorder(stream)
-      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          chunksRef.current.push(event.data)
+          chunksRef.current.push(event.data);
         }
-      }
+      };
 
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        sendAudioToAPI(blob)
-        chunksRef.current = []
-      }
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        sendAudioToAPI(blob);
+        chunksRef.current = [];
+      };
 
-      mediaRecorderRef.current.start()
-      setIsRecording(true)
-      setError(null)
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setError(null);
     } catch (err) {
-      console.error('Error accessing microphone:', err)
-      setError('Error accessing microphone. Please check your permissions and try again.')
+      console.error("Error accessing microphone:", err);
+      setError(
+        "Error accessing microphone. Please check your permissions and try again."
+      );
     }
-  }, [])
+  }, []);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
-  }, [isRecording])
+  }, [isRecording]);
 
-  const sendAudioToAPI = useCallback(async (audioBlob: Blob) => {
-    setIsProcessing(true)
-    const formData = new FormData()
-    formData.append('audio', audioBlob, 'recorded_audio.webm')
-    formData.append('language', sourceLanguage)
+  const sendAudioToAPI = useCallback(
+    async (audioBlob: Blob) => {
+      setIsProcessing(true);
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recorded_audio.webm");
+      formData.append("language", sourceLanguage);
 
-    try {
-      const response = await fetch('/api/synthesize/audio', {
-        method: 'POST',
-        body: formData,
-      })
+      try {
+        const response = await fetch("/api/synthesize/audio", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setTranscribedText(data.text);
+        setError(null);
+        await translateText(data.text);
+      } catch (err) {
+        console.error("Error sending audio to API:", err);
+        setError("Error transcribing audio. Please try again.");
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [sourceLanguage]
+  );
+
+  const translateText = useCallback(
+    async (text: string) => {
+      if (sourceLanguage === targetLanguage) {
+        setTranslatedText(text);
+        return;
       }
 
-      const data = await response.json()
-      setTranscribedText(data.text)
-      setError(null)
-      await translateText(data.text)
-    } catch (err) {
-      console.error('Error sending audio to API:', err)
-      setError('Error transcribing audio. Please try again.')
-    } finally {
-      setIsProcessing(false)
-    }
-  }, [sourceLanguage])
+      setIsTranslating(true);
+      try {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text,
+            sourceLanguage,
+            targetLanguage,
+          }),
+        });
 
-  const translateText = useCallback(async (text: string) => {
-    if (sourceLanguage === targetLanguage) {
-      setTranslatedText(text)
-      return
-    }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    setIsTranslating(true)
-    try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          sourceLanguage,
-          targetLanguage,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const data = await response.json();
+        setTranslatedText(data.translatedText);
+      } catch (err) {
+        console.error("Error translating text:", err);
+        setError("Error translating text. Please try again.");
+      } finally {
+        setIsTranslating(false);
       }
-
-      const data = await response.json()
-      setTranslatedText(data.translatedText)
-    } catch (err) {
-      console.error('Error translating text:', err)
-      setError('Error translating text. Please try again.')
-    } finally {
-      setIsTranslating(false)
-    }
-  }, [sourceLanguage, targetLanguage])
+    },
+    [sourceLanguage, targetLanguage]
+  );
 
   const generateAudio = useCallback(async () => {
-    setIsGeneratingAudio(true)
+    setIsGeneratingAudio(true);
     try {
-      const response = await fetch('/api/synthesize/text', {
-        method: 'POST',
+      const response = await fetch("/api/synthesize/text", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: translatedText,
           language: targetLanguage,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-      setAudioSrc(audioUrl)
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioSrc(audioUrl);
+
+      // Ensure the audio is loaded before playing
+      if (audioRef.current) {
+        audioRef.current.load();
+      }
     } catch (err) {
-      console.error('Error generating audio:', err)
-      setError('Error generating audio. Please try again.')
+      console.error("Error generating audio:", err);
+      setError("Error generating audio. Please try again.");
     } finally {
-      setIsGeneratingAudio(false)
+      setIsGeneratingAudio(false);
     }
-  }, [translatedText, targetLanguage])
+  }, [translatedText, targetLanguage]);
 
   useEffect(() => {
     return () => {
       if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
+        mediaRecorderRef.current.stream
+          .getTracks()
+          .forEach((track) => track.stop());
       }
       if (audioSrc) {
-        URL.revokeObjectURL(audioSrc)
+        URL.revokeObjectURL(audioSrc);
       }
-    }
-  }, [audioSrc])
+    };
+  }, [audioSrc]);
 
   return (
     <div className="container mx-auto p-4">
@@ -188,7 +209,7 @@ export default function AudioRecorderTranscriberTranslator() {
                 <SelectItem value="mx">Mexican Spanish</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
+            <Button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing || isTranslating || isGeneratingAudio}
               aria-label={isRecording ? "Stop recording" : "Start recording"}
@@ -222,7 +243,12 @@ export default function AudioRecorderTranscriberTranslator() {
             <Select
               value={targetLanguage}
               onValueChange={(value: Language) => setTargetLanguage(value)}
-              disabled={isRecording || isProcessing || isTranslating || isGeneratingAudio}
+              disabled={
+                isRecording ||
+                isProcessing ||
+                isTranslating ||
+                isGeneratingAudio
+              }
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Translation Language" />
@@ -272,6 +298,5 @@ export default function AudioRecorderTranscriberTranslator() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

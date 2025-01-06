@@ -62,13 +62,11 @@ export async function POST(req: NextRequest) {
     // Get the audio data
     const audioBuffer = await response.arrayBuffer()
 
-    // Return the audio file
     return new NextResponse(audioBuffer, {
-      headers: {
-        'Content-Type': 'audio/mpeg',
-        'Content-Disposition': 'attachment; filename="speech.mp3"'
-      }
-    })
+        headers: {
+          'Content-Type': 'audio/mpeg',
+        }
+      })
 
   } catch (error) {
     console.error('Error in text-to-speech conversion:', error)
