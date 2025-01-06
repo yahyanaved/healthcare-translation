@@ -30,31 +30,7 @@ export default function AudioRecorderTranscriberTranslator() {
   const chunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorderRef.current = new MediaRecorder(stream)
-      
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data)
-        }
-      }
-
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        sendAudioToAPI(blob)
-        chunksRef.current = []
-      }
-
-      mediaRecorderRef.current.start()
-      setIsRecording(true)
-      setError(null)
-    } catch (err) {
-      console.error('Error accessing microphone:', err)
-      setError('Error accessing microphone. Please check your permissions and try again.')
-    }
-  }, [])
+  
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -62,6 +38,43 @@ export default function AudioRecorderTranscriberTranslator() {
       setIsRecording(false)
     }
   }, [isRecording])
+
+  
+
+  const translateText = useCallback(async (text: string) => {
+    if (!text || sourceLanguage === targetLanguage) {
+      setTranslatedText(text)
+      return
+    }
+
+    setIsTranslating(true)
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          sourceLanguage,
+          targetLanguage,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setTranslatedText(data.translatedText)
+    } catch (err) {
+      console.error('Error translating text:', err)
+      setError('Error translating text. Please try again.')
+    } finally {
+      setIsTranslating(false)
+    }
+  }, [sourceLanguage, targetLanguage])
+
 
   const sendAudioToAPI = useCallback(async (audioBlob: Blob) => {
     setIsProcessing(true)
@@ -97,41 +110,33 @@ export default function AudioRecorderTranscriberTranslator() {
     } finally {
       setIsProcessing(false)
     }
-  }, [sourceLanguage, targetLanguage])
+  }, [sourceLanguage, targetLanguage, translateText])
 
-  const translateText = useCallback(async (text: string) => {
-    if (!text || sourceLanguage === targetLanguage) {
-      setTranslatedText(text)
-      return
-    }
-
-    setIsTranslating(true)
+  const startRecording = useCallback(async () => {
     try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          sourceLanguage,
-          targetLanguage,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorderRef.current = new MediaRecorder(stream)
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data)
+        }
       }
 
-      const data = await response.json()
-      setTranslatedText(data.translatedText)
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        sendAudioToAPI(blob)
+        chunksRef.current = []
+      }
+
+      mediaRecorderRef.current.start()
+      setIsRecording(true)
+      setError(null)
     } catch (err) {
-      console.error('Error translating text:', err)
-      setError('Error translating text. Please try again.')
-    } finally {
-      setIsTranslating(false)
+      console.error('Error accessing microphone:', err)
+      setError('Error accessing microphone. Please check your permissions and try again.')
     }
-  }, [sourceLanguage, targetLanguage])
+  }, [sendAudioToAPI])
 
   const generateAudio = useCallback(async () => {
     if (!translatedText) return
