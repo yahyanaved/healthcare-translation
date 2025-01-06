@@ -1,4 +1,5 @@
 // app/api/synthesize/text/route.ts
+import { validateText } from '@/utils/text'
 import { NextRequest, NextResponse } from 'next/server'
 
 const VOICE_RSS_API_KEY = process.env.VOICE_RSS_API_KEY || ''

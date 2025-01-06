@@ -3,7 +3,7 @@
 const MAX_TEXT_LENGTH = 1000 // 500 characters limit
 const MIN_TEXT_LENGTH = 1
 
-function validateText(text: string): { isValid: boolean; error?: string } {
+export function validateText(text: string): { isValid: boolean; error?: string } {
     if (typeof text !== 'string') {
       return { isValid: false, error: 'Text must be a string' }
     }
