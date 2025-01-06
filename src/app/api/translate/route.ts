@@ -16,6 +16,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text and targetLanguage are required' }, { status: 400 });
     }
 
+    if (text.length > 1000) {
+      return NextResponse.json({ error: 'Text is too long. Must be 1000 characters or less' }, { status: 400 });
+    }
+
     const translation = await translate(text, { from: sourceLanguage, to: targetLanguage });
 
     return NextResponse.json({ translatedText: translation });

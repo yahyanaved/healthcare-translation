@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const textValidation = validateText(text)
+    if (!textValidation.isValid) {
+      return NextResponse.json(
+        { error: textValidation.error },
+        { status: 400 }
+      )
+    }
+
     if (!SUPPORTED_LANGUAGES[language as keyof typeof SUPPORTED_LANGUAGES]) {
       return NextResponse.json(
         { error: 'Unsupported language' },

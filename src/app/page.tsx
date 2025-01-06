@@ -156,7 +156,6 @@ export default function AudioRecorderTranscriberTranslator() {
       const audioUrl = URL.createObjectURL(audioBlob);
       setAudioSrc(audioUrl);
 
-      // Ensure the audio is loaded before playing
       if (audioRef.current) {
         audioRef.current.load();
       }
@@ -185,7 +184,9 @@ export default function AudioRecorderTranscriberTranslator() {
     <div className="container mx-auto p-4">
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Audio Recorder, Transcriber, and Translator</CardTitle>
+          <CardTitle className="text-2xl md:text-3xl text-center">
+            Audio Recorder, Transcriber, and Translator
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
@@ -194,13 +195,13 @@ export default function AudioRecorderTranscriberTranslator() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <div className="flex justify-between items-center gap-2">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <Select
               value={sourceLanguage}
               onValueChange={(value: Language) => setSourceLanguage(value)}
               disabled={isRecording || isProcessing}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full md:w-[140px]">
                 <SelectValue placeholder="Source Language" />
               </SelectTrigger>
               <SelectContent>
@@ -213,6 +214,7 @@ export default function AudioRecorderTranscriberTranslator() {
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing || isTranslating || isGeneratingAudio}
               aria-label={isRecording ? "Stop recording" : "Start recording"}
+              className="w-full md:w-auto"
             >
               {isRecording ? (
                 <>
@@ -238,8 +240,9 @@ export default function AudioRecorderTranscriberTranslator() {
             readOnly
             rows={4}
             aria-label="Transcribed text"
+            className="w-full"
           />
-          <div className="flex justify-between items-center gap-2">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <Select
               value={targetLanguage}
               onValueChange={(value: Language) => setTargetLanguage(value)}
@@ -250,7 +253,7 @@ export default function AudioRecorderTranscriberTranslator() {
                 isGeneratingAudio
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Translation Language" />
               </SelectTrigger>
               <SelectContent>
@@ -263,6 +266,7 @@ export default function AudioRecorderTranscriberTranslator() {
               onClick={generateAudio}
               disabled={!translatedText || isGeneratingAudio}
               aria-label="Generate audio from translated text"
+              className="w-full md:w-auto"
             >
               {isGeneratingAudio ? (
                 <>
@@ -283,6 +287,7 @@ export default function AudioRecorderTranscriberTranslator() {
             readOnly
             rows={4}
             aria-label="Translated text"
+            className="w-full"
           />
           {isTranslating && (
             <div className="flex items-center justify-center">
@@ -291,9 +296,12 @@ export default function AudioRecorderTranscriberTranslator() {
             </div>
           )}
           {audioSrc && (
-            <audio ref={audioRef} controls src={audioSrc} className="w-full">
-              Your browser does not support the audio element.
-            </audio>
+            <div className="mt-4">
+              <audio ref={audioRef} controls className="w-full">
+                <source src={audioSrc} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
           )}
         </CardContent>
       </Card>

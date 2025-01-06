@@ -1,4 +1,3 @@
-// app/api/speech-to-text/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -15,6 +14,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    try {
+      await validateAudioFile(audioFile);
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+
+    const validLanguages = ['en', 'es', 'fr'];
+    if (language && !validLanguages.includes(language.toString())) {
+      return NextResponse.json(
+        { error: 'Invalid language code' },
+        { status: 400 }
+      );
+    }
     // Convert audio file to buffer
     const bytes = await audioFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
