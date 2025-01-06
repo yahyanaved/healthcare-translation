@@ -218,7 +218,7 @@ export default function AudioRecorderTranscriberTranslator() {
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl md:text-3xl text-center">
-            Audio Recorder, Transcriber, and Translator
+            HealthCare Translator and Transcriber
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -25,6 +25,14 @@ The application is built using Next.js and React, with a client-side component f
 
 ## AI Tools Used
 
+### Generative AI Usage
+
+The application was deployed on Vercel. The frontend was developed using v0.dev, and the backend was configured using Claude and ChatGPT.
+
+### AI APIs
+
+The application uses the free version of the AI tools, which can be expanded and improved upon by using a paid API. The free version has limitations such as the number of requests per day, the accuracy of the results, and the availability of features. The paid version of the AI tools can provide more accurate results, higher limits on the number of requests per day, and additional features that can be used to improve the application.
+
 1. **Speech-to-Text**: AssemblyAI's API is used for speech to text conversion. API Key is required
 2. **Translation**: npm library translate-google is used for translation
 3. **Text-to-Speech**: VoiceRSS public API is used for text-to-speech
@@ -32,7 +40,6 @@ The application is built using Next.js and React, with a client-side component f
 ## Security Considerations
 
 1. **API Key Protection**: Ensure that the VoiceRSS API key is stored securely as an environment variable and not exposed to the client-side code.  
-4. **CORS**: Configure CORS policies to restrict access to your API endpoints from unauthorized domains.  
 5. **HTTPS**: Ensure all communications are encrypted using HTTPS.  
 6. **Audio Data Handling**: Implement secure handling and storage of audio data, ensuring it's not persisted longer than necessary. 
 

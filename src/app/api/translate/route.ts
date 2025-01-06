@@ -9,7 +9,6 @@ const translate = require('translate-google')
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log(body)
     const { text, targetLanguage, sourceLanguage } = body;
 
     if (!text || !targetLanguage) {

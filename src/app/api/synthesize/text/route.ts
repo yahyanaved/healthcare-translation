@@ -7,7 +7,6 @@ const VOICE_RSS_API_KEY = process.env.VOICE_RSS_API_KEY || ''
 const SUPPORTED_LANGUAGES = {
   'en-US': 'en-us',
   'es-ES': 'es-es',
-  'es-MX': 'es-mx'
 }
 
 export async function POST(req: NextRequest) {
@@ -24,7 +23,6 @@ export async function POST(req: NextRequest) {
       default:
         language = languageParam
     }
-    console.log(language)
     // Input validation
     if (!text) {
       return NextResponse.json(
